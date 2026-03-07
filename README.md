@@ -51,12 +51,27 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-If you plan to run the LLM scoring scripts, set your API key first:
+## API key setup (only needed for LLM scoring scripts)
+If you only run the **Minimal runnable public demo** commands below, you do **NOT** need an API key.
+
+If you plan to run the **LLM scoring** scripts, set your API key first (Option A or B):
+
+**Option A (recommended): export an environment variable**
 ```bash
 export OPENROUTER_API_KEY=your_api_key_here
 ```
 
-A local `.env` file is also supported when `python-dotenv` is installed.
+**Option B: use a local `.env` file (auto-loaded via `python-dotenv`)**
+```bash
+cp .env.example .env
+```
+
+Then edit `.env` to set:
+```text
+OPENROUTER_API_KEY=your_api_key_here
+```
+
+Note: `.env` is intentionally not tracked by git (see `.gitignore`).
 
 ## Minimal runnable public demo
 The commands below can be executed with the public sample tables included in this repository.
