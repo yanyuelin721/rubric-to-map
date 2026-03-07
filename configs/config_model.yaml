@@ -1,0 +1,5 @@
+model_name: openai/gpt-4o-mini
+temperature: 0.4
+timeout_seconds: 120
+runs_per_image: 3
+workers: 4

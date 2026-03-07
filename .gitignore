@@ -1,0 +1,36 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets
+.env
+*.key
+*.pem
+
+# Logs
+*.log
+
+# Large/private data (keep public sample only)
+raw_images/
+original_streetview/
+private_data/
+# Archive metadata
+__MACOSX/
+._*
+
+# Generated public diagnostics
+sample_outputs/diagnostics/
+figures/diagnostics/

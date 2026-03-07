@@ -1,0 +1,19 @@
+id_aliases:
+  - image_id
+  - image_name
+  - 图片名
+
+score_columns:
+  - Q1_character
+  - Q2_enclosure
+  - Q3_walkability
+  - Q4_nature
+  - Q5_facade
+  - Q_overall
+
+semantic_group_columns:
+  - G1_character
+  - G2_enclosure
+  - G3_walkability
+  - G4_nature
+  - G5_facade_activity

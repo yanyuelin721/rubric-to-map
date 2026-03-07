@@ -1,0 +1,12 @@
+score_dimensions:
+  - Q1_character
+  - Q2_enclosure
+  - Q3_walkability
+  - Q4_nature
+  - Q5_facade
+  - Q_overall
+cv_folds: 5
+random_seed: 42
+stratification_bins: 4
+clip_range: [0.0, 10.0]
+aggregation: mean

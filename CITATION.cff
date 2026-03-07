@@ -1,0 +1,8 @@
+cff-version: 1.2.0
+title: Street Quality Reproducibility Package
+message: If you use this repository, please cite the associated paper or repository release.
+authors:
+  - family-names: Yan
+    given-names: Yuelin
+    orcid: https://orcid.org/0009-0006-2078-1299
+license: MIT
