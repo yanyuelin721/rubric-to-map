@@ -34,3 +34,4 @@ __MACOSX/
 # Generated public diagnostics
 sample_outputs/diagnostics/
 figures/diagnostics/
+.DS_Store
