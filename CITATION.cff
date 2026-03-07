@@ -1,8 +1,13 @@
 cff-version: 1.2.0
-title: Street Quality Reproducibility Package
-message: If you use this repository, please cite the associated paper or repository release.
+title: "Street Quality Reproducibility Package"
+message: "If you use this repository, please cite the repository release."
+type: software
 authors:
-  - family-names: Yan
-    given-names: Yuelin
-    orcid: https://orcid.org/0009-0006-2078-1299
-license: MIT
+  - family-names: "Yan"
+    given-names: "Yuelin"
+    orcid: "https://orcid.org/0009-0006-2078-1299"
+version: "0.1.1"
+date-released: "2026-03-07"
+doi: "10.5281/zenodo.18897096"
+repository-code: "https://github.com/yanyuelin721/qs-rubric-vlm-calibration"
+license: "MIT"

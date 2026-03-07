@@ -1,5 +1,7 @@
 # Street Quality Reproducibility Package
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18897096.svg)](https://doi.org/10.5281/zenodo.18897096)
+
 This repository is a public reproducibility package for a street-quality assessment study based on rubric-constrained VLM scoring, semantic-feature-assisted prompting, and backend score calibration.
 
 ## Public release scope
@@ -134,7 +136,9 @@ This package is designed to be understandable to external readers. Compared with
 - small shareable sample tables instead of the full private data
 
 ## Citation
-If you use this repository, please cite the associated paper or repository release in the format required by your venue.
+Zenodo DOI (v0.1.1): https://doi.org/10.5281/zenodo.18897096
+
+GitHub repository: https://github.com/yanyuelin721/qs-rubric-vlm-calibration
 
 Author ORCID: https://orcid.org/0009-0006-2078-1299
 
