@@ -70,7 +70,7 @@ def main() -> None:
     parser.add_argument("--human", type=str, default="sample_data/sample_human_ratings.xlsx")
     parser.add_argument("--human-fallback", type=str, default="sample_data/sample_human_ratings_fallback.xlsx")
     parser.add_argument("--feats", type=str, default="sample_data/sample_semantic_features.xlsx")
-    parser.add_argument("--llm", type=str, default="sample_data/sample_cre_scores_raw.xlsx")
+    parser.add_argument("--llm", type=str, default="sample_data/sample_sre_scores_raw.xlsx")
     parser.add_argument("--out-pred", type=str, default="sample_outputs/sample_oof_predictions.xlsx")
     parser.add_argument("--out-summary", type=str, default="sample_outputs/sample_oof_summary.xlsx")
     parser.add_argument("--id-col", type=str, default=None)

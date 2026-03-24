@@ -108,7 +108,7 @@ def load_sem(sem_path: Path, id_col: str | None) -> pd.DataFrame:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Backend calibration using semantic group features.")
     parser.add_argument("--base-dir", type=str, default=None)
-    parser.add_argument("--llm", type=str, default="sample_data/sample_cre_scores_raw.xlsx")
+    parser.add_argument("--llm", type=str, default="sample_data/sample_sre_scores_raw.xlsx")
     parser.add_argument("--human", type=str, default="sample_data/sample_human_ratings.xlsx")
     parser.add_argument("--human-fallback", type=str, default="sample_data/sample_human_ratings_fallback.xlsx")
     parser.add_argument("--feats", type=str, default="sample_data/sample_semantic_features.xlsx")
