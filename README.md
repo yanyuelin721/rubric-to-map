@@ -2,7 +2,7 @@
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18897096.svg)](https://doi.org/10.5281/zenodo.18897096)
 
-This repository is a public reproducibility package for the Rubric-to-Map Framework, which supports rubric-constrained VLM auditing, semantic backend calibration, and point-level urban perception mapping from street-view images.
+Public reproducibility package for the Rubric-to-Map Framework for VLM auditing, semantic calibration, and point-level urban perception mapping.
 
 ## Public release scope
 This repository includes only the materials that are safe to share publicly:
