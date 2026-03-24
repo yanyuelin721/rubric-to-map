@@ -1,8 +1,8 @@
-# Street Quality Reproducibility Package
+# Rubric-to-Map Reproducibility Package
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18897096.svg)](https://doi.org/10.5281/zenodo.18897096)
 
-This repository is a public reproducibility package for a street-quality assessment study based on rubric-constrained VLM scoring, semantic-feature-assisted prompting, and backend score calibration.
+This repository is a public reproducibility package for the Rubric-to-Map Framework, which supports rubric-constrained VLM auditing, semantic backend calibration, and point-level urban perception mapping from street-view images.
 
 ## Public release scope
 This repository includes only the materials that are safe to share publicly:
@@ -30,18 +30,18 @@ This repository does not include:
 
 ## Main scripts
 ### LLM scoring
-- `src/run_cre_scoring.py`
-- `src/run_cre_sem_scoring.py`
-- `src/run_cre_sem_level_scoring.py`
+- `src/run_sre_scoring.py`
+- `src/run_sre_sem_scoring.py`
+- `src/run_sre_sem_level_scoring.py`
 - `src/run_q3_only_scoring.py`
 
 ### Analysis and calibration
 - `src/run_oof_score_calibration.py`
 - `src/run_semantic_calibration.py`
 - `src/build_semantic_groups.py`
-- `src/analyze_cre.py`
-- `src/analyze_cre_sem.py`
-- `src/analyze_cre_sem_level.py`
+- `src/analyze_sre.py`
+- `src/analyze_sre_sem.py`
+- `src/analyze_sre_sem_level.py`
 - `src/compare_calibrated_scores.py`
 - `src/check_key_mismatch.py`
 - `src/check_ols_diagnostics.py`
@@ -80,12 +80,12 @@ The commands below can be executed with the public sample tables included in thi
 
 ```bash
 python src/build_semantic_groups.py --input sample_data/sample_semantic_label_table.xlsx --out-pruned sample_outputs/sample_semantic_pruned.xlsx --out-groups sample_outputs/sample_semantic_features_from_labels.xlsx
-python src/check_key_mismatch.py --human sample_data/sample_human_ratings.xlsx --feats sample_data/sample_semantic_features.xlsx --llm sample_data/sample_cre_scores_raw.xlsx
-python src/analyze_cre.py --llm sample_data/sample_cre_scores_raw.xlsx --human sample_data/sample_human_ratings.xlsx --out sample_outputs/sample_cre_reliability_summary.xlsx
-python src/analyze_cre_sem.py --llm sample_data/sample_cre_sem_scores_raw.xlsx --human sample_data/sample_human_ratings.xlsx --out sample_outputs/sample_cre_sem_reliability_summary.xlsx
-python src/analyze_cre_sem_level.py --llm sample_data/sample_cre_sem_level_scores_raw.xlsx --human sample_data/sample_human_ratings.xlsx --out sample_outputs/sample_cre_sem_level_reliability_summary.xlsx
-python src/run_semantic_calibration.py --llm sample_data/sample_cre_scores_raw.xlsx --human sample_data/sample_human_ratings.xlsx --feats sample_data/sample_semantic_features.xlsx
-python src/run_oof_score_calibration.py --llm sample_data/sample_cre_scores_raw.xlsx --human sample_data/sample_human_ratings.xlsx --feats sample_data/sample_semantic_features.xlsx
+python src/check_key_mismatch.py --human sample_data/sample_human_ratings.xlsx --feats sample_data/sample_semantic_features.xlsx --llm sample_data/sample_sre_scores_raw.xlsx
+python src/analyze_sre.py --llm sample_data/sample_sre_scores_raw.xlsx --human sample_data/sample_human_ratings.xlsx --out sample_outputs/sample_sre_reliability_summary.xlsx
+python src/analyze_sre_sem.py --llm sample_data/sample_sre_sem_scores_raw.xlsx --human sample_data/sample_human_ratings.xlsx --out sample_outputs/sample_sre_sem_reliability_summary.xlsx
+python src/analyze_sre_sem_level.py --llm sample_data/sample_sre_sem_level_scores_raw.xlsx --human sample_data/sample_human_ratings.xlsx --out sample_outputs/sample_sre_sem_level_reliability_summary.xlsx
+python src/run_semantic_calibration.py --llm sample_data/sample_sre_scores_raw.xlsx --human sample_data/sample_human_ratings.xlsx --feats sample_data/sample_semantic_features.xlsx
+python src/run_oof_score_calibration.py --llm sample_data/sample_sre_scores_raw.xlsx --human sample_data/sample_human_ratings.xlsx --feats sample_data/sample_semantic_features.xlsx
 python src/compare_calibrated_scores.py --calib sample_outputs/sample_calibrated_scores.xlsx --human sample_data/sample_human_ratings.xlsx
 python src/check_ols_diagnostics.py --features sample_data/sample_semantic_features.xlsx --scores sample_data/sample_human_ratings.xlsx --target Q_overall
 ```
@@ -94,9 +94,9 @@ python src/check_ols_diagnostics.py --features sample_data/sample_semantic_featu
 The public package does not include shareable sample street-view images. The commands below are retained to document the expected workflow, but they require image inputs and API access.
 
 ```bash
-python src/run_cre_scoring.py --images sample_data/sample_images --out sample_outputs/sample_cre_scores_raw.xlsx
-python src/run_cre_sem_scoring.py --images sample_data/sample_images --sem-feats sample_data/sample_semantic_features.xlsx --out sample_outputs/sample_cre_sem_scores_raw.xlsx
-python src/run_cre_sem_level_scoring.py --images sample_data/sample_images --sem-feats sample_data/sample_semantic_features.xlsx --out sample_outputs/sample_cre_sem_level_scores_raw.xlsx
+python src/run_sre_scoring.py --images sample_data/sample_images --out sample_outputs/sample_sre_scores_raw.xlsx
+python src/run_sre_sem_scoring.py --images sample_data/sample_images --sem-feats sample_data/sample_semantic_features.xlsx --out sample_outputs/sample_sre_sem_scores_raw.xlsx
+python src/run_sre_sem_level_scoring.py --images sample_data/sample_images --sem-feats sample_data/sample_semantic_features.xlsx --out sample_outputs/sample_sre_sem_level_scores_raw.xlsx
 python src/run_q3_only_scoring.py --images sample_data/sample_images --out sample_outputs/sample_q3_only_scores_raw.xlsx
 ```
 
@@ -138,7 +138,7 @@ This package is designed to be understandable to external readers. Compared with
 ## Citation
 Zenodo DOI (v0.1.1): https://doi.org/10.5281/zenodo.18897096
 
-GitHub repository: https://github.com/yanyuelin721/qs-rubric-vlm-calibration
+GitHub repository: https://github.com/yanyuelin721/rubric-to-map
 
 Author ORCID: https://orcid.org/0009-0006-2078-1299
 
