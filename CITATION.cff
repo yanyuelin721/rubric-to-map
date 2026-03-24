@@ -1,6 +1,6 @@
 cff-version: 1.2.0
 title: "Rubric-to-Map Framework Reproducibility Package"
-message: "If you use this repository, please cite the repository release."
+message: "If you use this repository, please cite the archived release."
 type: software
 authors:
   - family-names: "Yan"
