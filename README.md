@@ -136,7 +136,7 @@ This package is designed to be understandable to external readers. Compared with
 - small shareable sample tables instead of the full private data
 
 ## Citation
-Zenodo DOI (v0.1.1): https://doi.org/10.5281/zenodo.19200289
+Zenodo DOI (v0.1.2): https://doi.org/10.5281/zenodo.19200289
 
 GitHub repository: https://github.com/yanyuelin721/rubric-to-map
 
