@@ -1,6 +1,6 @@
 # Rubric-to-Map Reproducibility Package
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18897096.svg)](https://doi.org/10.5281/zenodo.18897096)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19200289.svg)](https://doi.org/10.5281/zenodo.19200289)
 
 Public reproducibility package for the Rubric-to-Map Framework for VLM auditing, semantic calibration, and point-level urban perception mapping.
 
