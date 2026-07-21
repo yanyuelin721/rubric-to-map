@@ -2,7 +2,7 @@
 """
 llm_utils.py
 
-Utility helpers for the public StreetLLM reproducibility package.
+Utility helpers for Rubric-to-Map model calls.
 These functions are used by the OpenRouter-based scoring scripts.
 """
 

@@ -28,13 +28,13 @@ from llm_utils import (
     post_openrouter_json,
     read_semantic_feature_map,
 )
-from utils import get_project_root
+from utils import BASE_SCORE_COLS, compute_overall_score, get_project_root
 
 DEFAULT_MODEL = "openai/gpt-4o-mini"
-DEFAULT_RUNS_PER_IMAGE = 1
-DEFAULT_OUT = "sample_outputs/sample_sre_sem_scores_raw.xlsx"
-DEFAULT_IMAGES = "sample_data/sample_images"
-DEFAULT_SEM = "sample_data/sample_semantic_features.xlsx"
+DEFAULT_RUNS_PER_IMAGE = 3
+DEFAULT_OUT = "outputs/sre_sem_scores_raw.xlsx"
+DEFAULT_IMAGES = "data/images"
+DEFAULT_SEM = "data/semantic_features.xlsx"
 
 QS_RUBRIC_TEXT = """
 You are an expert in urban design and environmental psychology. Based on the provided street-view images from the Wuhan Tiandi district (Wuhan, Hubei Province, China), evaluate the location's overall urban visual quality.
@@ -79,9 +79,10 @@ After reading the rubric carefully, make your judgment and output ONLY the follo
   "Q2_enclosure": float,
   "Q3_walkability": float,
   "Q4_nature": float,
-  "Q5_facade": float,
-  "Q_overall": float
+  "Q5_facade": float
 }
+
+Q_overall is not an independent rating. It is computed downstream as the arithmetic mean of Q1–Q5.
 """.strip()
 
 
@@ -155,16 +156,13 @@ def worker(job: Tuple[Path, int, Optional[Dict[str, float]], str, float, int]) -
     result: Dict[str, Any] = {"success": False, "image_id": image_id, "run_id": run_id, "row": None, "error": ""}
     try:
         payload = call_llm_for_image(image_path=image_path, sem_row=sem_row, model=model, temperature=temperature, timeout=timeout)
+        scores = {col: float(payload.get(col)) for col in BASE_SCORE_COLS}
         row = {
             "image_id": image_id,
             "model": model,
             "run_id": run_id,
-            "Q1_character": float(payload.get("Q1_character")),
-            "Q2_enclosure": float(payload.get("Q2_enclosure")),
-            "Q3_walkability": float(payload.get("Q3_walkability")),
-            "Q4_nature": float(payload.get("Q4_nature")),
-            "Q5_facade": float(payload.get("Q5_facade")),
-            "Q_overall": float(payload.get("Q_overall")),
+            **scores,
+            "Q_overall": compute_overall_score(scores),
             "comment": str(payload.get("comment", "")),
         }
         result["success"] = True

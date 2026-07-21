@@ -12,9 +12,9 @@ Quickly inspect ID mismatches across:
 Example
 -------
 python src/check_key_mismatch.py \
-  --human sample_data/sample_human_ratings.xlsx \
-  --feats sample_data/sample_semantic_features.xlsx \
-  --llm sample_data/sample_sre_scores_raw.xlsx
+  --human data/human_ratings.xlsx \
+  --feats data/semantic_features.xlsx \
+  --llm data/sre_scores_raw.xlsx
 """
 
 from __future__ import annotations
@@ -30,9 +30,9 @@ from utils import find_id_column, get_project_root, normalize_id_series, read_ta
 def main() -> None:
     parser = argparse.ArgumentParser(description="Check ID mismatches across tables.")
     parser.add_argument("--base-dir", type=str, default=None)
-    parser.add_argument("--human", type=str, default="sample_data/sample_human_ratings.xlsx")
-    parser.add_argument("--feats", type=str, default="sample_data/sample_semantic_features.xlsx")
-    parser.add_argument("--llm", type=str, default="sample_data/sample_sre_scores_raw.xlsx")
+    parser.add_argument("--human", type=str, default="data/human_ratings.xlsx")
+    parser.add_argument("--feats", type=str, default="data/semantic_features.xlsx")
+    parser.add_argument("--llm", type=str, default="data/sre_scores_raw.xlsx")
     parser.add_argument("--id-col", type=str, default=None)
     args = parser.parse_args()
 
