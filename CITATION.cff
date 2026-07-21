@@ -1,13 +1,12 @@
 cff-version: 1.2.0
-title: "Rubric-to-Map Framework Reproducibility Package"
-message: "If you use this repository, please cite the archived release."
+title: "Rubric-to-Map Framework Code"
+message: "If you use this code, please cite the corresponding archived release."
 type: software
 authors:
   - family-names: "Yan"
     given-names: "Yuelin"
     orcid: "https://orcid.org/0009-0006-2078-1299"
-version: "0.1.2"
-date-released: "2026-03-24"
-doi: "10.5281/zenodo.18897096"
+version: "0.2.0"
+date-released: "2026-07-21"
 repository-code: "https://github.com/yanyuelin721/rubric-to-map"
 license: "MIT"

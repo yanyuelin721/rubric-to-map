@@ -1,13 +1,13 @@
 project_root: .
-sample_data_dir: sample_data
-sample_output_dir: sample_outputs
+data_dir: data
+output_dir: outputs
 figure_dir: figures
 
-sample_files:
-  human_scores: sample_data/sample_human_ratings.xlsx
-  fallback_human_scores: sample_data/sample_human_ratings_fallback.xlsx
-  semantic_label_table: sample_data/sample_semantic_label_table.xlsx
-  semantic_features: sample_data/sample_semantic_features.xlsx
-  sre_raw_scores: sample_data/sample_sre_scores_raw.xlsx
-  sre_sem_raw_scores: sample_data/sample_sre_sem_scores_raw.xlsx
-  sre_sem_level_raw_scores: sample_data/sample_sre_sem_level_scores_raw.xlsx
+files:
+  human_scores: data/human_ratings.xlsx
+  fallback_human_scores: data/human_ratings_fallback.xlsx
+  semantic_label_table: data/semantic_label_table.xlsx
+  semantic_features: data/semantic_features.xlsx
+  sre_raw_scores: data/sre_scores_raw.xlsx
+  sre_sem_raw_scores: data/sre_sem_scores_raw.xlsx
+  sre_sem_level_raw_scores: data/sre_sem_level_scores_raw.xlsx

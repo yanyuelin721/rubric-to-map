@@ -25,7 +25,9 @@ from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import StratifiedKFold
 
 from utils import (
+    BASE_SCORE_COLS,
     DEFAULT_SCORE_COLS,
+    add_derived_overall,
     find_id_column,
     get_project_root,
     must_have_columns,
@@ -47,7 +49,6 @@ FEATURE_SUBSET: Dict[str, List[str]] = {
     "Q3_walkability": ["G3", "G2", "G4"],
     "Q4_nature": ["G4"],
     "Q5_facade": ["G1", "G5"],
-    "Q_overall": ["G1", "G2", "G3", "G4", "G5"],
 }
 
 
@@ -67,12 +68,12 @@ def compute_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser(description="OOF calibration using semantic group features.")
     parser.add_argument("--base-dir", type=str, default=None)
-    parser.add_argument("--human", type=str, default="sample_data/sample_human_ratings.xlsx")
-    parser.add_argument("--human-fallback", type=str, default="sample_data/sample_human_ratings_fallback.xlsx")
-    parser.add_argument("--feats", type=str, default="sample_data/sample_semantic_features.xlsx")
-    parser.add_argument("--llm", type=str, default="sample_data/sample_sre_scores_raw.xlsx")
-    parser.add_argument("--out-pred", type=str, default="sample_outputs/sample_oof_predictions.xlsx")
-    parser.add_argument("--out-summary", type=str, default="sample_outputs/sample_oof_summary.xlsx")
+    parser.add_argument("--human", type=str, default="data/human_ratings.xlsx")
+    parser.add_argument("--human-fallback", type=str, default="data/human_ratings_fallback.xlsx")
+    parser.add_argument("--feats", type=str, default="data/semantic_features.xlsx")
+    parser.add_argument("--llm", type=str, default="data/sre_scores_raw.xlsx")
+    parser.add_argument("--out-pred", type=str, default="outputs/oof_predictions.xlsx")
+    parser.add_argument("--out-summary", type=str, default="outputs/oof_summary.xlsx")
     parser.add_argument("--id-col", type=str, default=None)
     parser.add_argument("--n-splits", type=int, default=5)
     parser.add_argument("--seed", type=int, default=42)
@@ -107,9 +108,9 @@ def main() -> None:
     fk = find_id_column(feats, id_col=args.id_col)
     lk = find_id_column(llm, id_col=args.id_col)
 
-    must_have_columns(human, [hk, *DEFAULT_SCORE_COLS], "HUMAN")
+    must_have_columns(human, [hk, *BASE_SCORE_COLS], "HUMAN")
     must_have_columns(feats, [fk, *SEM_RENAME.keys()], "FEATURES")
-    must_have_columns(llm, [lk, *DEFAULT_SCORE_COLS], "LLM_RAW")
+    must_have_columns(llm, [lk, *BASE_SCORE_COLS], "LLM_RAW")
 
     # Normalize IDs
     human[hk] = normalize_id_series(human[hk])
@@ -121,14 +122,16 @@ def main() -> None:
 
     # Aggregate LLM runs
     if args.agg == "mean":
-        llm_agg = llm.groupby(lk, as_index=False)[list(DEFAULT_SCORE_COLS)].mean()
+        llm_agg = llm.groupby(lk, as_index=False)[list(BASE_SCORE_COLS)].mean()
     else:
-        llm_agg = llm.groupby(lk, as_index=False)[list(DEFAULT_SCORE_COLS)].median()
+        llm_agg = llm.groupby(lk, as_index=False)[list(BASE_SCORE_COLS)].median()
+    llm_agg = add_derived_overall(llm_agg)
     llm_agg = llm_agg.rename(columns={lk: "image_id"})
     llm_agg = llm_agg.rename(columns={d: f"{d}_LLM" for d in DEFAULT_SCORE_COLS})
 
     # Human rename
-    human = human[[hk, *DEFAULT_SCORE_COLS]].rename(columns={hk: "image_id"})
+    human = add_derived_overall(human[[hk, *BASE_SCORE_COLS]])
+    human = human.rename(columns={hk: "image_id"})
     human = human.rename(columns={d: f"{d}_human" for d in DEFAULT_SCORE_COLS})
 
     # Merge
@@ -154,7 +157,7 @@ def main() -> None:
 
     skf = StratifiedKFold(n_splits=args.n_splits, shuffle=True, random_state=args.seed)
 
-    for d in DEFAULT_SCORE_COLS:
+    for d in BASE_SCORE_COLS:
         df[f"{d}_cal_OOF"] = np.nan
 
     clip_min, clip_max = args.clip
@@ -162,7 +165,7 @@ def main() -> None:
     for fold, (tr_idx, te_idx) in enumerate(skf.split(df, df["_bin"]), start=1):
         tr = df.iloc[tr_idx]
         te = df.iloc[te_idx]
-        for d in DEFAULT_SCORE_COLS:
+        for d in BASE_SCORE_COLS:
             x_cols = [f"{d}_LLM"] + FEATURE_SUBSET[d]
             Xtr = tr[x_cols].astype(float).values
             ytr = tr[f"{d}_human"].astype(float).values
@@ -172,6 +175,9 @@ def main() -> None:
             pred = np.clip(model.predict(Xte), clip_min, clip_max)
             df.iloc[te_idx, df.columns.get_loc(f"{d}_cal_OOF")] = pred
         print(f"Fold {fold} done.")
+
+    # Q_overall is derived after calibration and is never fitted as a separate target.
+    df = add_derived_overall(df, suffix="_cal_OOF")
 
     # Summary
     rows = []

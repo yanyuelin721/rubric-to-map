@@ -4,9 +4,13 @@ score_dimensions:
   - Q3_walkability
   - Q4_nature
   - Q5_facade
-  - Q_overall
+derived_score_dimensions:
+  Q_overall: arithmetic_mean_of_Q1_to_Q5
+overall_modeled_separately: false
 cv_folds: 5
 random_seed: 42
 stratification_bins: 4
 clip_range: [0.0, 10.0]
 aggregation: mean
+runs_per_image: 3
+inference_unit: image

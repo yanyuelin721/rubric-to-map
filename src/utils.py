@@ -2,7 +2,7 @@
 """
 utils.py
 
-Small utilities for the public reproducibility package.
+Shared table, path, and score utilities for Rubric-to-Map.
 
 Key features:
 - project-root resolution (CLI > env var > auto-detect)
@@ -14,21 +14,45 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Iterable, Optional, Sequence, Tuple
+from typing import Iterable, Mapping, Optional, Sequence, Tuple
 
 import pandas as pd
 import yaml
 
 
 DEFAULT_ID_ALIASES: Tuple[str, ...] = ("图片名", "image_id", "image_name")
-DEFAULT_SCORE_COLS: Tuple[str, ...] = (
+BASE_SCORE_COLS: Tuple[str, ...] = (
     "Q1_character",
     "Q2_enclosure",
     "Q3_walkability",
     "Q4_nature",
     "Q5_facade",
-    "Q_overall",
 )
+DEFAULT_SCORE_COLS: Tuple[str, ...] = (*BASE_SCORE_COLS, "Q_overall")
+
+
+def compute_overall_score(scores: Mapping[str, object]) -> float:
+    """Return the arithmetic mean of Q1–Q5; Q_overall is never an independent input."""
+    return float(sum(float(scores[col]) for col in BASE_SCORE_COLS) / len(BASE_SCORE_COLS))
+
+
+def add_derived_overall(
+    df: pd.DataFrame,
+    *,
+    suffix: str = "",
+    target_col: str | None = None,
+    copy: bool = True,
+) -> pd.DataFrame:
+    """Add or overwrite a Q_overall column derived from Q1–Q5 columns."""
+    out = df.copy() if copy else df
+    source_cols = [f"{col}{suffix}" for col in BASE_SCORE_COLS]
+    missing = [col for col in source_cols if col not in out.columns]
+    if missing:
+        raise ValueError(f"Cannot derive Q_overall; missing columns: {missing}")
+    target = target_col or f"Q_overall{suffix}"
+    numeric = out[source_cols].apply(pd.to_numeric, errors="raise")
+    out[target] = numeric.mean(axis=1)
+    return out
 
 
 def get_project_root(cli_base_dir: Optional[str] = None) -> Path:

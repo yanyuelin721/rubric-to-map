@@ -7,14 +7,14 @@ Purpose
 Create semantic feature groups (G1–G5) from a per-image semantic label table.
 This is a lightweight, transparent grouping step used as backend calibration features.
 
-Inputs (default)
-----------------
-- sample_data/sample_semantic_label_table.xlsx  (a table with one row per image, columns are semantic labels)
+Input (default)
+---------------
+- data/semantic_label_table.xlsx (one row per image; semantic labels are columns)
 
 Outputs (default)
 -----------------
-- sample_outputs/sample_semantic_pruned.xlsx   (pruned semantic table)
-- sample_outputs/sample_semantic_features_built.xlsx   (G1–G5 grouped feature table)
+- outputs/semantic_pruned.xlsx (pruned semantic table)
+- outputs/semantic_features.xlsx (G1–G5 grouped feature table)
 
 Notes
 -----
@@ -23,7 +23,7 @@ Notes
 
 Example
 -------
-python src/build_semantic_groups.py --input sample_data/sample_semantic_label_table.xlsx
+python src/build_semantic_groups.py --input data/semantic_label_table.xlsx
 """
 
 from __future__ import annotations
@@ -39,47 +39,57 @@ from utils import find_id_column, get_project_root, normalize_id_series, read_ta
 DEFAULT_INDOOR_LIKE = [
     "bed", "cabinet", "table", "shelf", "pooltable", "pillow", "sink",
     "towel", "bottle", "bag", "ball", "plate", "monitor", "crtscreen",
-    "blanket", "pot", "stool", "barrel", "tent", "computer", "food",
+    "blanket", "pot", "barrel", "tent", "computer", "food",
     "dishwasher", "microwave", "oven", "sofa", "coffeetable",
 ]
 
 
 GROUPS = {
     "G1_character": [
-        "tower", "bridge", "sculpture", "fountain", "flag",
-        "stage", "booth", "tradename", "signboard", "poster",
-        "building", "house", "skyscraper", "wall", "painting",
-        "bulletinboard", "clock",
+        "tower", "sculpture", "fountain", "flag", "stage", "tradename",
+        "signboard", "poster", "bulletinboard", "clock", "painting",
     ],
     "G2_enclosure": [
         "building", "house", "skyscraper", "wall", "column", "bridge",
-        "road", "sidewalk", "path", "floor", "stairs", "stairway",
-        "dirttrack", "step", "sky", "water", "river", "sea", "hill", "field",
+        "road", "sky",
     ],
     "G3_walkability": [
-        "sidewalk", "path", "stairs", "stairway", "step",
-        "bench", "seat", "railing", "fence", "bannister",
+        "sidewalk", "path", "dirttrack", "stairs", "stairway", "step",
+        "bench", "seat", "chair", "stool", "railing", "fence", "bannister",
         "pole", "streetlight", "lamp", "light", "trafficlight",
-        "awning", "booth", "ashcan", "plaything",
+        "awning", "booth", "base", "ashcan", "plaything",
     ],
     "G4_nature": [
         "tree", "grass", "plant", "flower", "palm", "field", "hill",
-        "sand", "mountain", "earth", "water", "river", "sea", "fountain", "rock",
+        "sand", "mountain", "earth", "water", "river", "sea", "rock",
     ],
     "G5_facade_activity": [
-        "windowpane", "door", "glass",
-        "person", "apparel",
-        "car", "bus", "truck", "van", "boat", "ship", "bicycle", "minibike",
+        "windowpane", "door", "glass", "person", "apparel",
     ],
 }
 
 
+def validate_exclusive_groups() -> None:
+    """Fail fast if any retained semantic label is assigned to more than one group."""
+    owners: dict[str, str] = {}
+    duplicates: dict[str, list[str]] = {}
+    for group_name, labels in GROUPS.items():
+        for label in labels:
+            if label in owners:
+                duplicates.setdefault(label, [owners[label]]).append(group_name)
+            else:
+                owners[label] = group_name
+    if duplicates:
+        raise ValueError(f"Semantic groups must be mutually exclusive; duplicates: {duplicates}")
+
+
 def main() -> None:
+    validate_exclusive_groups()
     parser = argparse.ArgumentParser(description="Construct semantic group features (G1–G5).")
     parser.add_argument("--base-dir", type=str, default=None)
-    parser.add_argument("--input", type=str, default="sample_data/sample_semantic_label_table.xlsx")
-    parser.add_argument("--out-pruned", type=str, default="sample_outputs/sample_semantic_pruned.xlsx")
-    parser.add_argument("--out-groups", type=str, default="sample_outputs/sample_semantic_features_built.xlsx")
+    parser.add_argument("--input", type=str, default="data/semantic_label_table.xlsx")
+    parser.add_argument("--out-pruned", type=str, default="outputs/semantic_pruned.xlsx")
+    parser.add_argument("--out-groups", type=str, default="outputs/semantic_features.xlsx")
     parser.add_argument("--id-col", type=str, default=None)
     args = parser.parse_args()
 

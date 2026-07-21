@@ -25,8 +25,8 @@ from utils import get_project_root
 
 DEFAULT_MODEL = "openai/gpt-4o-mini"
 DEFAULT_RUNS_PER_IMAGE = 3
-DEFAULT_OUT = "sample_outputs/sample_q3_only_scores_raw.xlsx"
-DEFAULT_IMAGES = "sample_data/sample_images"
+DEFAULT_OUT = "outputs/q3_only_scores_raw.xlsx"
+DEFAULT_IMAGES = "data/images"
 
 QS_RUBRIC_Q3 = """
 You are an expert in urban design and environmental psychology. You only need to evaluate ONE thing:

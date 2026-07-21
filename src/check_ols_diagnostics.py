@@ -17,8 +17,8 @@ Outputs
 Example
 -------
 python src/check_ols_diagnostics.py \
-  --features sample_data/sample_semantic_features.xlsx \
-  --scores sample_data/sample_human_ratings.xlsx \
+  --features data/semantic_features.xlsx \
+  --scores data/human_ratings.xlsx \
   --target Q_overall
 """
 
@@ -35,7 +35,7 @@ import pandas as pd
 import statsmodels.api as sm
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 
-from utils import find_id_column, get_project_root, must_have_columns, normalize_id_series, read_table
+from utils import BASE_SCORE_COLS, add_derived_overall, find_id_column, get_project_root, must_have_columns, normalize_id_series, read_table
 
 
 FEATURE_COLS = [
@@ -50,10 +50,10 @@ FEATURE_COLS = [
 def main() -> None:
     parser = argparse.ArgumentParser(description="OLS diagnostics for semantic features.")
     parser.add_argument("--base-dir", type=str, default=None)
-    parser.add_argument("--features", type=str, default="sample_data/sample_semantic_features.xlsx")
-    parser.add_argument("--scores", type=str, default="sample_data/sample_human_ratings.xlsx")
+    parser.add_argument("--features", type=str, default="data/semantic_features.xlsx")
+    parser.add_argument("--scores", type=str, default="data/human_ratings.xlsx")
     parser.add_argument("--target", type=str, default="Q_overall")
-    parser.add_argument("--out-dir", type=str, default="sample_outputs/diagnostics")
+    parser.add_argument("--out-dir", type=str, default="outputs/diagnostics")
     parser.add_argument("--fig-dir", type=str, default="figures/diagnostics")
     parser.add_argument("--id-col", type=str, default=None)
     args = parser.parse_args()
@@ -71,6 +71,9 @@ def main() -> None:
 
     feat_df = read_table(feature_path)
     score_df = read_table(score_path)
+    if args.target == "Q_overall":
+        must_have_columns(score_df, BASE_SCORE_COLS, "SCORES")
+        score_df = add_derived_overall(score_df)
 
     fid = find_id_column(feat_df, id_col=args.id_col)
     sid = find_id_column(score_df, id_col=args.id_col)

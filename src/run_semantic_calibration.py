@@ -10,7 +10,7 @@ Fit a linear backend calibrator for each dimension:
 
 Steps
 -----
-1) Aggregate raw LLM scores to one row per image (median across runs)
+1) Aggregate raw LLM scores to one row per image (mean across runs)
 2) Merge with semantic group features (G1–G5) and human reference scores
 3) Fit least-squares regression per dimension
 4) Apply calibration to all images (LLM + semantic)
@@ -33,7 +33,9 @@ import pandas as pd
 from scipy.stats import pearsonr
 
 from utils import (
+    BASE_SCORE_COLS,
     DEFAULT_SCORE_COLS,
+    add_derived_overall,
     find_id_column,
     get_project_root,
     must_have_columns,
@@ -55,7 +57,6 @@ SEM_FEATURES_BY_DIM: Dict[str, List[str]] = {
     "Q3_walkability": ["G3_walkability", "G2_enclosure", "G4_nature"],
     "Q4_nature": ["G4_nature"],
     "Q5_facade": ["G1_character", "G5_facade_activity"],
-    "Q_overall": ["G1_character", "G2_enclosure", "G3_walkability", "G4_nature", "G5_facade_activity"],
 }
 
 
@@ -77,21 +78,22 @@ def load_human(primary: Path, fallback: Path | None, id_col: str | None) -> pd.D
         raise FileNotFoundError(f"Human score file not found: {primary} (and fallback {fallback})")
     df = read_table(path)
     idc = find_id_column(df, id_col=id_col)
-    must_have_columns(df, [idc, *DEFAULT_SCORE_COLS], "HUMAN")
-    df = df[[idc, *DEFAULT_SCORE_COLS]].copy()
+    must_have_columns(df, [idc, *BASE_SCORE_COLS], "HUMAN")
+    df = add_derived_overall(df[[idc, *BASE_SCORE_COLS]])
     df[idc] = normalize_id_series(df[idc])
     return df.rename(columns={idc: "image_id"})
 
 
-def load_llm_median(llm_path: Path, id_col: str | None) -> pd.DataFrame:
+def load_llm_mean(llm_path: Path, id_col: str | None) -> pd.DataFrame:
     df = read_table(llm_path)
     idc = find_id_column(df, id_col=id_col)
-    must_have_columns(df, [idc, *DEFAULT_SCORE_COLS], "LLM_RAW")
-    df = df[[idc, *DEFAULT_SCORE_COLS]].copy()
+    must_have_columns(df, [idc, *BASE_SCORE_COLS], "LLM_RAW")
+    df = df[[idc, *BASE_SCORE_COLS]].copy()
     df[idc] = normalize_id_series(df[idc])
-    med = df.groupby(idc)[list(DEFAULT_SCORE_COLS)].median().reset_index()
-    med = med.rename(columns={c: f"{c}_llm" for c in DEFAULT_SCORE_COLS})
-    return med.rename(columns={idc: "image_id"})
+    agg = df.groupby(idc)[list(BASE_SCORE_COLS)].mean().reset_index()
+    agg = add_derived_overall(agg)
+    agg = agg.rename(columns={c: f"{c}_llm" for c in DEFAULT_SCORE_COLS})
+    return agg.rename(columns={idc: "image_id"})
 
 
 def load_sem(sem_path: Path, id_col: str | None) -> pd.DataFrame:
@@ -108,12 +110,12 @@ def load_sem(sem_path: Path, id_col: str | None) -> pd.DataFrame:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Backend calibration using semantic group features.")
     parser.add_argument("--base-dir", type=str, default=None)
-    parser.add_argument("--llm", type=str, default="sample_data/sample_sre_scores_raw.xlsx")
-    parser.add_argument("--human", type=str, default="sample_data/sample_human_ratings.xlsx")
-    parser.add_argument("--human-fallback", type=str, default="sample_data/sample_human_ratings_fallback.xlsx")
-    parser.add_argument("--feats", type=str, default="sample_data/sample_semantic_features.xlsx")
-    parser.add_argument("--out-scores", type=str, default="sample_outputs/sample_calibrated_scores.xlsx")
-    parser.add_argument("--out-summary", type=str, default="sample_outputs/sample_calibration_summary.xlsx")
+    parser.add_argument("--llm", type=str, default="data/sre_scores_raw.xlsx")
+    parser.add_argument("--human", type=str, default="data/human_ratings.xlsx")
+    parser.add_argument("--human-fallback", type=str, default="data/human_ratings_fallback.xlsx")
+    parser.add_argument("--feats", type=str, default="data/semantic_features.xlsx")
+    parser.add_argument("--out-scores", type=str, default="outputs/calibrated_scores.xlsx")
+    parser.add_argument("--out-summary", type=str, default="outputs/calibration_summary.xlsx")
     parser.add_argument("--dim", type=str, default="all")
     parser.add_argument("--id-col", type=str, default=None)
     parser.add_argument("--max-score", type=float, default=10.0)
@@ -134,16 +136,18 @@ def main() -> None:
     out_summary = _resolve(args.out_summary); out_summary.parent.mkdir(parents=True, exist_ok=True)
 
     df_human = load_human(human_primary, human_fallback, id_col=args.id_col)
-    df_llm = load_llm_median(llm_path, id_col=args.id_col)
+    df_llm = load_llm_mean(llm_path, id_col=args.id_col)
     df_sem = load_sem(sem_path, id_col=args.id_col)
 
     df_all = df_llm.merge(df_sem, on="image_id", how="left")
     df_calib = df_all.merge(df_human, on="image_id", how="inner")
 
     if args.dim == "all":
-        dims = list(DEFAULT_SCORE_COLS)
+        dims = list(BASE_SCORE_COLS)
     else:
-        if args.dim not in DEFAULT_SCORE_COLS:
+        if args.dim == "Q_overall":
+            raise ValueError("Q_overall is derived from calibrated Q1–Q5 and is not fitted separately; use --dim all.")
+        if args.dim not in BASE_SCORE_COLS:
             raise ValueError(f"Unknown dim: {args.dim}")
         dims = [args.dim]
 
@@ -199,6 +203,32 @@ def main() -> None:
         summary_rows.append(row)
 
         print(f"[{dim}] r_before={r_before:.3f} -> r_after={r_after:.3f}; len={len_before:.3f} -> {len_after:.3f}")
+
+    calibrated_cols = [f"{dim}_calibrated" for dim in BASE_SCORE_COLS]
+    if all(col in df_all.columns for col in calibrated_cols):
+        df_all = add_derived_overall(df_all, suffix="_calibrated")
+        overall_eval = df_all[["image_id", "Q_overall_llm", "Q_overall_calibrated"]].merge(
+            df_human[["image_id", "Q_overall"]], on="image_id", how="inner"
+        ).dropna()
+        y = overall_eval["Q_overall"].astype(float).values
+        raw = overall_eval["Q_overall_llm"].astype(float).values
+        calibrated = overall_eval["Q_overall_calibrated"].astype(float).values
+        r_before, p_before = pearsonr(y, raw)
+        r_after, p_after = pearsonr(y, calibrated)
+        len_before = compute_leniency(y, raw, max_score=args.max_score)
+        len_after = compute_leniency(y, calibrated, max_score=args.max_score)
+        summary_rows.append({
+            "dimension": "Q_overall",
+            "n_samples": int(len(overall_eval)),
+            "features_used": "derived arithmetic mean of calibrated Q1–Q5",
+            "intercept": np.nan,
+            "r_before": float(r_before),
+            "p_before": float(p_before),
+            "r_after": float(r_after),
+            "p_after": float(p_after),
+            "leniency_before_norm": float(len_before),
+            "leniency_after_norm": float(len_after),
+        })
 
     df_all.to_excel(out_scores, index=False)
     print("Saved calibrated scores ->", out_scores)

@@ -9,6 +9,8 @@ score_columns:
   - Q3_walkability
   - Q4_nature
   - Q5_facade
+
+derived_score_columns:
   - Q_overall
 
 semantic_group_columns:

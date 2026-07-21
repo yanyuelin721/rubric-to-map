@@ -23,7 +23,10 @@ Thumbs.db
 # Logs
 *.log
 
-# Large/private data (keep public sample only)
+# Data and generated results
+data/
+outputs/
+figures/
 raw_images/
 original_streetview/
 private_data/
@@ -31,7 +34,4 @@ private_data/
 __MACOSX/
 ._*
 
-# Generated public diagnostics
-sample_outputs/diagnostics/
-figures/diagnostics/
 .DS_Store

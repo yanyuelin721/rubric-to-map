@@ -9,9 +9,9 @@ Analyze SRE-Sem raw VLM scores (prompt includes semantic features) vs human refe
 Example
 -------
 python src/analyze_sre_sem.py \
-  --llm sample_data/sample_sre_sem_scores_raw.xlsx \
-  --human sample_data/sample_human_ratings.xlsx \
-  --out sample_outputs/sample_sre_sem_reliability_summary.xlsx
+  --llm data/sre_sem_scores_raw.xlsx \
+  --human data/human_ratings.xlsx \
+  --out outputs/sre_sem_analysis.xlsx
 """
 
 from __future__ import annotations
@@ -24,7 +24,9 @@ import pandas as pd
 from scipy.stats import pearsonr, spearmanr
 
 from utils import (
+    BASE_SCORE_COLS,
     DEFAULT_SCORE_COLS,
+    add_derived_overall,
     find_id_column,
     get_project_root,
     must_have_columns,
@@ -45,8 +47,8 @@ def load_human_scores(primary: Path, fallback: Path | None, id_col: str | None) 
         raise FileNotFoundError(f"Human score file not found: {primary} (and fallback {fallback})")
     df = read_table(path)
     idc = find_id_column(df, id_col=id_col)
-    must_have_columns(df, [idc, *DEFAULT_SCORE_COLS], "HUMAN")
-    df = df[[idc, *DEFAULT_SCORE_COLS]].copy()
+    must_have_columns(df, [idc, *BASE_SCORE_COLS], "HUMAN")
+    df = add_derived_overall(df[[idc, *BASE_SCORE_COLS]])
     df[idc] = normalize_id_series(df[idc])
     return df, idc, path
 
@@ -54,10 +56,10 @@ def load_human_scores(primary: Path, fallback: Path | None, id_col: str | None) 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Analyze SRE-Sem raw VLM scores (prompt includes semantic features) vs human reference.")
     parser.add_argument("--base-dir", type=str, default=None)
-    parser.add_argument("--llm", type=str, default="sample_data/sample_sre_sem_scores_raw.xlsx")
-    parser.add_argument("--human", type=str, default="sample_data/sample_human_ratings.xlsx")
-    parser.add_argument("--human-fallback", type=str, default="sample_data/sample_human_ratings_fallback.xlsx")
-    parser.add_argument("--out", type=str, default="sample_outputs/sample_sre_sem_reliability_summary.xlsx")
+    parser.add_argument("--llm", type=str, default="data/sre_sem_scores_raw.xlsx")
+    parser.add_argument("--human", type=str, default="data/human_ratings.xlsx")
+    parser.add_argument("--human-fallback", type=str, default="data/human_ratings_fallback.xlsx")
+    parser.add_argument("--out", type=str, default="outputs/sre_sem_analysis.xlsx")
     parser.add_argument("--id-col", type=str, default=None)
     parser.add_argument("--max-score", type=float, default=10.0)
     args = parser.parse_args()
@@ -76,8 +78,8 @@ def main() -> None:
 
     df_llm = read_table(llm_path)
     llm_id = find_id_column(df_llm, id_col=args.id_col)
-    must_have_columns(df_llm, [llm_id, "run_id", *DEFAULT_SCORE_COLS], "LLM_RAW")
-    df_llm = df_llm[[llm_id, "run_id", *DEFAULT_SCORE_COLS]].copy()
+    must_have_columns(df_llm, [llm_id, "run_id", *BASE_SCORE_COLS], "LLM_RAW")
+    df_llm = add_derived_overall(df_llm[[llm_id, "run_id", *BASE_SCORE_COLS]])
     df_llm[llm_id] = normalize_id_series(df_llm[llm_id])
     print(f"Loaded LLM results: {llm_path} (rows={len(df_llm)})")
 
@@ -90,6 +92,10 @@ def main() -> None:
     if df.empty:
         raise ValueError("No matched images after merge. Please check ID consistency.")
     print(f"Merged samples (including all runs): {len(df)}")
+
+    df_mean = df_llm.groupby("image_id", as_index=False)[list(DEFAULT_SCORE_COLS)].mean()
+    df_mean = pd.merge(df_mean, df_human, on="image_id", how="inner", suffixes=("_llm", "_human"))
+    print(f"Merged independent images (mean across runs): {len(df_mean)}")
 
     # A) Agreement by run_id
     rows_by_run = []
@@ -120,13 +126,13 @@ def main() -> None:
             })
     df_by_run = pd.DataFrame(rows_by_run)
 
-    # B) Agreement across all runs
+    # B) Agreement after averaging repeated runs within image
     rows_all = []
     for dim in DEFAULT_SCORE_COLS:
         h_col = f"{dim}_human"
         e_col = f"{dim}_llm"
-        x = df[h_col].astype(float)
-        y = df[e_col].astype(float)
+        x = df_mean[h_col].astype(float)
+        y = df_mean[e_col].astype(float)
         mask = x.notna() & y.notna()
         x = x[mask]; y = y[mask]
         if len(x) < 3:
@@ -170,7 +176,7 @@ def main() -> None:
 
     with pd.ExcelWriter(out_path) as writer:
         df_by_run.to_excel(writer, sheet_name="sem_by_run", index=False)
-        df_all_runs.to_excel(writer, sheet_name="sem_all_runs", index=False)
+        df_all_runs.to_excel(writer, sheet_name="sem_mean_runs", index=False)
         df_stab_per_image.to_excel(writer, sheet_name="sem_stab_img", index=False)
         df_stab_summary.to_excel(writer, sheet_name="sem_stab_sum", index=False)
 

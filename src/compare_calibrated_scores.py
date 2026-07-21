@@ -8,19 +8,19 @@ Compare raw (LLM) vs calibrated scores against human reference.
 
 Input (default)
 ---------------
-- sample_outputs/sample_calibrated_scores.xlsx
+- outputs/calibrated_scores.xlsx
   expected columns: image_id (or 图片名) and for each dimension:
     {dim}_llm, {dim}_calibrated
 
-- sample_data/sample_human_ratings.xlsx (or fallback sample_data/sample_human_ratings_fallback.xlsx)
+- data/human_ratings.xlsx (or fallback data/human_ratings_fallback.xlsx)
 
 Output (default)
 ----------------
-- sample_outputs/sample_raw_vs_calibrated_comparison.xlsx
+- outputs/raw_vs_calibrated_comparison.xlsx
 
 Example
 -------
-python src/compare_calibrated_scores.py --calib sample_outputs/sample_calibrated_scores.xlsx --human sample_data/sample_human_ratings.xlsx
+python src/compare_calibrated_scores.py --calib outputs/calibrated_scores.xlsx --human data/human_ratings.xlsx
 """
 
 from __future__ import annotations
@@ -33,7 +33,9 @@ import pandas as pd
 from scipy.stats import pearsonr, spearmanr
 
 from utils import (
+    BASE_SCORE_COLS,
     DEFAULT_SCORE_COLS,
+    add_derived_overall,
     find_id_column,
     get_project_root,
     must_have_columns,
@@ -54,8 +56,8 @@ def load_human_scores(primary: Path, fallback: Path | None, id_col: str | None) 
         raise FileNotFoundError(f"Human score file not found: {primary} (and fallback {fallback})")
     df = read_table(path)
     idc = find_id_column(df, id_col=id_col)
-    must_have_columns(df, [idc, *DEFAULT_SCORE_COLS], "HUMAN")
-    df = df[[idc, *DEFAULT_SCORE_COLS]].copy()
+    must_have_columns(df, [idc, *BASE_SCORE_COLS], "HUMAN")
+    df = add_derived_overall(df[[idc, *BASE_SCORE_COLS]])
     df[idc] = normalize_id_series(df[idc])
     return df, idc, path
 
@@ -63,10 +65,10 @@ def load_human_scores(primary: Path, fallback: Path | None, id_col: str | None) 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Compare raw vs calibrated scores.")
     parser.add_argument("--base-dir", type=str, default=None)
-    parser.add_argument("--calib", type=str, default="sample_outputs/sample_calibrated_scores.xlsx")
-    parser.add_argument("--human", type=str, default="sample_data/sample_human_ratings.xlsx")
-    parser.add_argument("--human-fallback", type=str, default="sample_data/sample_human_ratings_fallback.xlsx")
-    parser.add_argument("--out", type=str, default="sample_outputs/sample_raw_vs_calibrated_comparison.xlsx")
+    parser.add_argument("--calib", type=str, default="outputs/calibrated_scores.xlsx")
+    parser.add_argument("--human", type=str, default="data/human_ratings.xlsx")
+    parser.add_argument("--human-fallback", type=str, default="data/human_ratings_fallback.xlsx")
+    parser.add_argument("--out", type=str, default="outputs/raw_vs_calibrated_comparison.xlsx")
     parser.add_argument("--id-col", type=str, default=None)
     parser.add_argument("--max-score", type=float, default=10.0)
     args = parser.parse_args()
@@ -89,10 +91,12 @@ def main() -> None:
     df_cal = read_table(calib_path)
     cid = find_id_column(df_cal, id_col=args.id_col)
     needed = [cid]
-    for dim in DEFAULT_SCORE_COLS:
+    for dim in BASE_SCORE_COLS:
         needed += [f"{dim}_llm", f"{dim}_calibrated"]
     must_have_columns(df_cal, needed, "CALIBRATED_SCORES")
     df_cal = df_cal[needed].copy()
+    df_cal = add_derived_overall(df_cal, suffix="_llm")
+    df_cal = add_derived_overall(df_cal, suffix="_calibrated")
     df_cal[cid] = normalize_id_series(df_cal[cid])
     df_cal = df_cal.rename(columns={cid: "image_id"})
 

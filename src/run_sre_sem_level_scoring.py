@@ -3,8 +3,8 @@
 run_sre_sem_level_scoring.py
 
 Run the SRE-Sem-Level variant: image-based scoring with semantic features
-injected as qualitative levels (e.g., 几乎没有 / 较小 / 中等 / 较大 / 很大)
-plus the underlying numeric proportion as reference.
+injected as four qualitative levels (very little / a little / a lot /
+a great deal). The underlying numeric proportions are not shown to the model.
 
 The exact prompt is embedded because it is part of the experimental setup.
 """
@@ -28,13 +28,20 @@ from llm_utils import (
     post_openrouter_json,
     read_semantic_feature_map,
 )
-from utils import get_project_root
+from utils import BASE_SCORE_COLS, compute_overall_score, get_project_root
 
 DEFAULT_MODEL = "openai/gpt-4o-mini"
-DEFAULT_RUNS_PER_IMAGE = 1
-DEFAULT_OUT = "sample_outputs/sample_sre_sem_level_scores_raw.xlsx"
-DEFAULT_IMAGES = "sample_data/sample_images"
-DEFAULT_SEM = "sample_data/sample_semantic_features.xlsx"
+DEFAULT_RUNS_PER_IMAGE = 3
+DEFAULT_OUT = "outputs/sre_sem_level_scores_raw.xlsx"
+DEFAULT_IMAGES = "data/images"
+DEFAULT_SEM = "data/semantic_features.xlsx"
+SEMANTIC_LEVEL_THRESHOLDS = (0.05, 0.20, 0.40)
+SEMANTIC_LEVEL_LABELS = (
+    "very little（很少）",
+    "a little（较少）",
+    "a lot（较多）",
+    "a great deal（很多）",
+)
 
 QS_RUBRIC_TEXT = """
 You are an expert in urban design and environmental psychology. Based on the provided street-view images from the Wuhan Tiandi district (Wuhan, Hubei Province, China), evaluate the location's overall urban visual quality.
@@ -79,22 +86,22 @@ After reading the rubric carefully, make your judgment and output ONLY the follo
   "Q2_enclosure": float,
   "Q3_walkability": float,
   "Q4_nature": float,
-  "Q5_facade": float,
-  "Q_overall": float
+  "Q5_facade": float
 }
+
+Q_overall is not an independent rating. It is computed downstream as the arithmetic mean of Q1–Q5.
 """.strip()
 
 
 def proportion_to_level(value: float) -> str:
-    if value < 0.05:
-        return "几乎没有"
-    if value < 0.20:
-        return "较小"
-    if value < 0.40:
-        return "中等"
-    if value < 0.60:
-        return "较大"
-    return "很大"
+    """Map a 0–1 semantic proportion to one of four qualitative priors."""
+    value = float(value)
+    if not 0.0 <= value <= 1.0:
+        raise ValueError(f"Semantic proportion must be within [0, 1], got {value}.")
+    for threshold, label in zip(SEMANTIC_LEVEL_THRESHOLDS, SEMANTIC_LEVEL_LABELS):
+        if value < threshold:
+            return label
+    return SEMANTIC_LEVEL_LABELS[-1]
 
 
 def build_semantic_text(image_id: str, sem_row: Dict[str, float]) -> str:
@@ -111,13 +118,13 @@ def build_semantic_text(image_id: str, sem_row: Dict[str, float]) -> str:
     g5 = float(sem_row.get("G5_facade_activity", 0.0))
     return (
         f"当前街景图片文件名：{image_id}。\n"
-        f"根据语义分割统计，该视角下五个语义要素的相对量级大致如下（括号内为像素占比，0~1）：\n"
-        f"- G1_character：{proportion_to_level(g1)}（约 {g1:.3f}）\n"
-        f"- G2_enclosure：{proportion_to_level(g2)}（约 {g2:.3f}）\n"
-        f"- G3_walkability：{proportion_to_level(g3)}（约 {g3:.3f}）\n"
-        f"- G4_nature：{proportion_to_level(g4)}（约 {g4:.3f}）\n"
-        f"- G5_facade_activity：{proportion_to_level(g5)}（约 {g5:.3f}）\n"
-        f"请注意：这些等级和占比只描述视觉要素的相对量级，本身并不直接等同于感知质量的高低。"
+        f"根据语义分割统计，该视角下五个语义要素的四档自然语言先验如下：\n"
+        f"- G1_character：{proportion_to_level(g1)}\n"
+        f"- G2_enclosure：{proportion_to_level(g2)}\n"
+        f"- G3_walkability：{proportion_to_level(g3)}\n"
+        f"- G4_nature：{proportion_to_level(g4)}\n"
+        f"- G5_facade_activity：{proportion_to_level(g5)}\n"
+        f"请注意：这些自然语言等级只描述视觉要素的相对量级，本身并不直接等同于感知质量的高低。"
     )
 
 
@@ -151,16 +158,13 @@ def worker(job: Tuple[Path, int, Optional[Dict[str, float]], str, float, int]) -
     result: Dict[str, Any] = {"success": False, "image_id": image_id, "run_id": run_id, "row": None, "error": ""}
     try:
         payload = call_llm_for_image(image_path=image_path, sem_row=sem_row, model=model, temperature=temperature, timeout=timeout)
+        scores = {col: float(payload.get(col)) for col in BASE_SCORE_COLS}
         row = {
             "image_id": image_id,
             "model": model,
             "run_id": run_id,
-            "Q1_character": float(payload.get("Q1_character")),
-            "Q2_enclosure": float(payload.get("Q2_enclosure")),
-            "Q3_walkability": float(payload.get("Q3_walkability")),
-            "Q4_nature": float(payload.get("Q4_nature")),
-            "Q5_facade": float(payload.get("Q5_facade")),
-            "Q_overall": float(payload.get("Q_overall")),
+            **scores,
+            "Q_overall": compute_overall_score(scores),
             "comment": str(payload.get("comment", "")),
         }
         result["success"] = True
