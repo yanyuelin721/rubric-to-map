@@ -1,6 +1,6 @@
 cff-version: 1.2.0
 title: "Rubric-to-Map Framework Code"
-message: "If you use this code, please cite the corresponding archived release."
+message: "If you use this code in your research, please cite the Cities article listed below."
 type: software
 authors:
   - family-names: "Yan"
@@ -10,3 +10,27 @@ version: "0.2.0"
 date-released: "2026-07-21"
 repository-code: "https://github.com/yanyuelin721/rubric-to-map"
 license: "MIT"
+
+preferred-citation:
+  type: article
+  title: "Auditing what MLLMs see: A rubric-to-map framework for planning-oriented urban perception mapping from street-view imagery"
+  authors:
+    - family-names: "Yan"
+      given-names: "Yuelin"
+      orcid: "https://orcid.org/0009-0006-2078-1299"
+    - family-names: "Jiang"
+      given-names: "Liangcun"
+    - family-names: "Huang"
+      given-names: "Zehong"
+    - family-names: "Guo"
+      given-names: "Yuan"
+    - family-names: "Huang"
+      given-names: "Jiejun"
+    - family-names: "Zhou"
+      given-names: "Han"
+  journal: "Cities"
+  year: 2026
+  volume: 180
+  issue: "Part A"
+  number: 107857
+  doi: "10.1016/j.cities.2026.107857"
