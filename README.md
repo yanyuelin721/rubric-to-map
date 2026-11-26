@@ -1,4 +1,5 @@
 # Rubric-to-Map
+The research presented in this repository has been published in *Cities*. [Read the paper](https://doi.org/10.1016/j.cities.2026.107857).
 
 Rubric-to-Map provides Python scripts for rubric-guided vision-language-model scoring, semantic feature construction, score calibration, agreement analysis, and diagnostic checks for urban visual-quality studies.
 
