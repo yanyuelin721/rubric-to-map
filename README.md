@@ -111,6 +111,7 @@ Use `python src/<script>.py --help` for the complete options of any script.
 This source-only release contains the current, harmonized implementation of the method. It is not a byte-for-byte snapshot of every script used during the study and cannot by itself regenerate the reported numerical results without the original study inputs.
 
 ## Citation
+Yan, Y., Jiang, L., Huang, Z., Guo, Y., Huang, J., & Zhou, H. (2026). Auditing what MLLMs see: A rubric-to-map framework for planning-oriented urban perception mapping from street-view imagery. *Cities*, 180 (Part A), 107857. https://doi.org/10.1016/j.cities.2026.107857
 
 Repository: https://github.com/yanyuelin721/rubric-to-map
 
